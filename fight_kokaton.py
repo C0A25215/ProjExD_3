@@ -169,7 +169,7 @@ def main():
     # bomb = Bomb((255, 0, 0), 10)
     # bombs = 
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-    beam = None  # ゲーム初期化時にはビームは存在しない
+    beams = []  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -179,7 +179,7 @@ def main():
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)
+                beams.append(Beam(bird))
                             
         screen.blit(bg_img, [0, 0])
         for bomb in bombs:
@@ -194,19 +194,23 @@ def main():
                 return
 
         for i, bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):
-                    bombs[i] = None
-                    beam = None
-                    score.value += 1 #score判定
-                    # ビームで爆弾を撃ち落としたこうかとんが悦ぶ
-                    bird.change_img(6, screen)
-                    pg.display.update()
+            for j, beam in enumerate(beams):
+                if beam is not None:
+                    if beam.rct.colliderect(bomb.rct):
+                        # ビームと爆弾が消滅した際に両方消滅させる
+                        beams[j] = None
+                        bombs[i] = None
+                        bird.change_img(6, screen)
+                        score.value += 1
+                        pg.display.update()
+                        break
         bombs = [bomb for bomb in bombs if bomb is not None]
+        beams = [beam for beam in beams if beam is not None] # Noneを削除
+        beams = [beam for beam in beams if check_bound(beam.rct) == (True, True)] # 画面外に行ったビームを削除
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        if beam is not None:
+        for beam in beams:
             beam.update(screen)
         for bomb in bombs: 
             bomb.update(screen)

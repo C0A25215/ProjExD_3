@@ -159,6 +159,30 @@ class Score:
         )
         screen.blit(self.img, self.rct)
 
+class Explosion:
+    """
+    爆発エフェクトに関するクラス
+    """
+
+    def __init__(self, bomb_rct: pg.Rect):
+        """
+        爆発エフェクトのSurfaceを生成し座標,残存時間を定義する
+        引数 bomb_rct: 爆発した爆弾のRect
+        """
+        self.effects = [
+            pg.image.load(f"fig/explosion.gif"),
+            pg.transform.flip(pg.image.load(f"fig/explosion.gif"), True, True),
+        ]
+        self.rct = bomb_rct.center
+        self.life = 20
+        self.appear = 0
+
+    def update(self, screen: pg.Surface):
+        self.life -= 1
+        if self.life % 4 == 0:  # lifeが偶数か奇数かで画像を切り替え
+            self.appear = self.appear ^ 1  # 1との排他的論理和を取ることで1と0を切り替え
+        screen.blit(self.effects[self.appear], self.rct)
+
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
@@ -172,6 +196,7 @@ def main():
     beams = []  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
+    explosions = []  # 爆発エフェクト格納用の空リスト
     while True:
         for event in pg.event.get():
             
@@ -197,6 +222,7 @@ def main():
             for j, beam in enumerate(beams):
                 if beam is not None:
                     if beam.rct.colliderect(bomb.rct):
+                        explosions.append(Explosion(bomb.rct)) #爆発エフェクト
                         # ビームと爆弾が消滅した際に両方消滅させる
                         beams[j] = None
                         bombs[i] = None
@@ -207,6 +233,8 @@ def main():
         bombs = [bomb for bomb in bombs if bomb is not None]
         beams = [beam for beam in beams if beam is not None] # Noneを削除
         beams = [beam for beam in beams if check_bound(beam.rct) == (True, True)] # 画面外に行ったビームを削除
+        #lifeが0より大きいExplosionインスタンスだけのリストにする
+        explosions = [explosion for explosion in explosions if explosion.life > 0] 
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
@@ -214,6 +242,8 @@ def main():
             beam.update(screen)
         for bomb in bombs: 
             bomb.update(screen)
+        for explosion in explosions: #爆発を描画 
+            explosion.update(screen)
         score.update(screen)  # 追加
         pg.display.update()
         tmr += 1

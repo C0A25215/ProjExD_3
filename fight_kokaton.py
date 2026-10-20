@@ -204,7 +204,8 @@ def main():
     clock = pg.time.Clock()
     tmr = 0
     explosions = []  # 爆発エフェクト格納用の空リスト
-  
+
+
     while True:
         for event in pg.event.get():
             
